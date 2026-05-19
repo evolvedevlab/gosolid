@@ -23,8 +23,8 @@ type RenderOptions struct {
 
 type Render struct {
 	bundleMap map[string]*Bundle
-	debug     bool
 	tmpl      *template.Template
+	debug     bool
 }
 
 func NewRenderer(bMap map[string]*Bundle, tmpl *template.Template, debug bool) *Render {

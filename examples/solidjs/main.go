@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 type Data struct {
@@ -30,11 +31,12 @@ func main() {
 			return
 		}
 
+		start := time.Now()
 		err := app.Renderer.Render(w, http.StatusOK, gosolid.RenderOptions{
-			Name:  "Home.jsx",
+			Name:  "web/pages/Home.jsx",
 			Props: Data{Msg: "gello"},
 		})
-		log.Println("render error:", err)
+		log.Println("render error:", err, time.Since(start))
 	})
 
 	fmt.Println("listening...")
