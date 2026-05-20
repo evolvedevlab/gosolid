@@ -24,7 +24,7 @@ func main() {
 	}
 
 	// expose only the client bundle dir
-	http.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("dist/client"))))
+	http.Handle("/client/", gowebi.ServeBundle(app.BundleDir()))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)

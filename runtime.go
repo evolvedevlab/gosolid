@@ -7,6 +7,10 @@ import (
 	"github.com/dop251/goja"
 )
 
+var clg = func(args ...any) {
+	log.Println(append([]any{"[JS]:"}, args...)...)
+}
+
 type Runtime struct {
 	VM     *goja.Runtime
 	Render goja.Callable
@@ -47,9 +51,6 @@ func newVM() *goja.Runtime {
 	vm.Set("clearTimeout", func(goja.FunctionCall) goja.Value {
 		return goja.Undefined()
 	})
-	clg := func(args ...any) {
-		log.Println(append([]any{"[JS]:"}, args...)...)
-	}
 	vm.Set("console", map[string]func(...any){
 		"log":   clg,
 		"error": clg,

@@ -2,7 +2,6 @@ package gowebi
 
 import (
 	"encoding/json"
-	"html/template"
 	"io"
 	"log"
 	"os"
@@ -11,18 +10,6 @@ import (
 
 	"github.com/dop251/goja"
 )
-
-type Config struct {
-	BundleDir string
-	IsDev     bool
-}
-
-type GoSolid struct {
-	Renderer Renderer
-
-	cfg       Config
-	bundleMap map[string]*Bundle
-}
 
 type Bundle struct {
 	Program    *goja.Program
@@ -41,32 +28,6 @@ type Build struct {
 
 type Output struct {
 	EntryPoint string `json:"entryPoint"`
-}
-
-func New(cfg Config) (*GoSolid, error) {
-	tmpl, err := template.ParseFiles(filepath.Join(cfg.BundleDir, "index.html"))
-	if err != nil {
-		return nil, err
-	}
-
-	metafile := filepath.Join(cfg.BundleDir, "metafile.json")
-
-	f, err := os.Open(metafile)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	bundles, err := bundleFromMetafile(f, cfg.BundleDir)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GoSolid{
-		cfg:       cfg,
-		Renderer:  NewRenderer(bundles, tmpl, cfg.IsDev),
-		bundleMap: bundles,
-	}, nil
 }
 
 func bundleFromMetafile(r io.Reader, dir string) (map[string]*Bundle, error) {
@@ -88,6 +49,10 @@ func bundleFromMetafile(r io.Reader, dir string) (map[string]*Bundle, error) {
 	}
 
 	for outPath, o := range mf.Server.Outputs {
+		if filepath.Ext(outPath) != ".js" {
+			continue
+		}
+
 		code, err := os.ReadFile(outPath)
 		if err != nil {
 			return nil, err
