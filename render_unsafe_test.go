@@ -10,20 +10,7 @@ import (
 	"github.com/dop251/goja"
 )
 
-const testTmpl = `
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {{.Head}}
-  </head>
-  <body>
-    <div id="app">{{.App}}</div>
-  </body>
-</html>`
-
-func BenchmarkRender(b *testing.B) {
+func BenchmarkUnsafeRender(b *testing.B) {
 	comp, err := os.ReadFile("testdata/simplecomp.js")
 	if err != nil {
 		b.Fatal(err)
@@ -34,10 +21,18 @@ func BenchmarkRender(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	r := NewRenderer(
-		map[string]*Bundle{
-			"test": {Program: program},
-		},
+	bm := map[string]*Bundle{
+		"test": {Program: program},
+	}
+
+	pool, err := newPool(1, bm)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	r := NewPooledRenderer(
+		pool,
+		bm,
 		template.Must(template.New("").Parse(testTmpl)),
 		true,
 	)

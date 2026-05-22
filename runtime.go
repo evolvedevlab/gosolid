@@ -7,7 +7,7 @@ import (
 	"github.com/dop251/goja"
 )
 
-var undefinedGojaFn = func(...goja.FunctionCall) goja.Value {
+var undefinedGojaFn = func(goja.FunctionCall) goja.Value {
 	return goja.Undefined()
 }
 var clg = func(args ...any) {
@@ -26,7 +26,7 @@ type Runtime struct {
 func runWithVM(vm *goja.Runtime, program *goja.Program) (*Runtime, error) {
 	_, err := vm.RunProgram(program)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run program: %+v", err)
+		return nil, fmt.Errorf("failed to run program: %w", err)
 	}
 
 	render, ok := goja.AssertFunction(vm.Get("render"))
@@ -46,11 +46,11 @@ func runWithVM(vm *goja.Runtime, program *goja.Program) (*Runtime, error) {
 // runVM runs the loaded program in a new vm.
 // meta function is optional and can be nil.
 func runVM(program *goja.Program) (*Runtime, error) {
-	vm := newVM()
+	vm := newVM(cfg.SuppressConsoleLogs)
 
 	_, err := vm.RunProgram(program)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run program: %+v", err)
+		return nil, fmt.Errorf("failed to run program: %w", err)
 	}
 
 	render, ok := goja.AssertFunction(vm.Get("render"))
@@ -67,21 +67,26 @@ func runVM(program *goja.Program) (*Runtime, error) {
 	}, nil
 }
 
-func newVM() *goja.Runtime {
+func newVM(suppressConsoleLogs bool) *goja.Runtime {
 	vm := goja.New()
 	vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 
-	vm.Set("setTimeout", func(goja.FunctionCall) goja.Value {
-		return goja.Undefined()
-	})
-	vm.Set("clearTimeout", func(goja.FunctionCall) goja.Value {
-		return goja.Undefined()
-	})
-	vm.Set("console", map[string]func(...any){
-		"log":   clg,
-		"error": clg,
-		"warn":  clg,
-	})
+	vm.Set("setTimeout", undefinedGojaFn)
+	vm.Set("clearTimeout", undefinedGojaFn)
+	if suppressConsoleLogs {
+		l := func(...any) {}
+		vm.Set("console", map[string]func(...any){
+			"log":   l,
+			"error": l,
+			"warn":  l,
+		})
+	} else {
+		vm.Set("console", map[string]func(...any){
+			"log":   clg,
+			"error": clg,
+			"warn":  clg,
+		})
+	}
 
 	return vm
 }

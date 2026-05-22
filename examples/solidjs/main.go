@@ -17,7 +17,7 @@ type Data struct {
 func main() {
 	app, err := gowebi.New(gowebi.Config{
 		BundleDir: "./dist",
-		IsDev:     os.Getenv("ENVIRONMENT") == "development",
+		IsDev:     os.Getenv("ENVIRONMENT") != "production",
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -27,7 +27,7 @@ func main() {
 	http.Handle("/client/", gowebi.ServeBundle(app.BundleDir()))
 	http.HandleFunc("/dash", func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		err := app.Renderer.Render(w, http.StatusOK, gowebi.RenderOptions{
+		err := app.Renderer.Render(r.Context(), w, http.StatusOK, gowebi.RenderOptions{
 			Name: "web/pages/Dash.jsx",
 		})
 		log.Println("render error:", err, time.Since(start))
@@ -39,7 +39,7 @@ func main() {
 		}
 
 		start := time.Now()
-		err := app.Renderer.Render(w, http.StatusOK, gowebi.RenderOptions{
+		err := app.Renderer.Render(r.Context(), w, http.StatusOK, gowebi.RenderOptions{
 			Name:  "web/pages/Home.jsx",
 			Props: Data{Msg: "gello"},
 		})

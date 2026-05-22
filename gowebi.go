@@ -6,18 +6,19 @@ import (
 	"path/filepath"
 )
 
+var cfg Config
+
 type Config struct {
 	BundleDir string
-	// Enables vm pool
+	// Enables vm pooling for lower allocations and better performance.
 	// Default mode creates a new vm per request.
-	// Default pool size is 10.
-	// WARN: with this on, do not set global JS state (it might persist between requests).
+	//
+	// WARN: global JS state may persist between requests.
 	UnsafePoolMode bool
 	UnsafePoolSize int
-	IsDev          bool
-
-	// TODO: yet to be implemented
-	SuppressServerConsoleLogs bool
+	// Suppresses server-side console logs from JS.
+	SuppressConsoleLogs bool
+	IsDev               bool
 }
 
 type GoWebi struct {
@@ -31,7 +32,10 @@ func (gw *GoWebi) BundleDir() string {
 	return gw.cfg.BundleDir
 }
 
-func New(cfg Config) (*GoWebi, error) {
+func New(c Config) (*GoWebi, error) {
+	// set global cfg
+	cfg = c
+
 	tmpl, err := template.ParseFiles(filepath.Join(cfg.BundleDir, "index.html"))
 	if err != nil {
 		return nil, err

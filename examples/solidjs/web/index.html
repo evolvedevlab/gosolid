@@ -3,20 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {{- if .Meta.title -}}
-        <title>{{.Meta.title}}</title>
+    {{- with index .Meta "title" }}
+    <title>{{ . }}</title>
     {{- end -}}
-    {{- if .Meta.description -}}
-        <meta name="description" content="{{.Meta.description}}"></meta>
+    {{- range $k, $v := .Meta }}
+    {{- if ne $k "title" }}
+    <meta name="{{ $k }}" content="{{ $v }}">
     {{- end -}}
+    {{- end }}
 
-    {{.Head}}
+    {{ .Script }}
   </head>
   <body>
-    <div id="app">{{.App}}</div>
+    <div id="app">{{ .App }}</div>
 
-    {{if not .NoHydrate}}
+    {{ if not .NoHydrate }}
         <script type="module" src="{{.HydrationScriptSrc}}"></script>
-    {{end}}
+    {{ end }}
   </body>
 </html>
