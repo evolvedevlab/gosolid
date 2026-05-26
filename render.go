@@ -11,14 +11,14 @@ import (
 type Render struct {
 	bundleMap map[string]*Bundle
 	tmpl      *template.Template
-	debug     bool
+	isDev     bool
 }
 
-func NewRenderer(bMap map[string]*Bundle, tmpl *template.Template, debug bool) *Render {
+func NewRenderer(bMap map[string]*Bundle, tmpl *template.Template, isDev bool) *Render {
 	return &Render{
 		bundleMap: bMap,
 		tmpl:      tmpl,
-		debug:     debug,
+		isDev:     isDev,
 	}
 }
 
@@ -30,7 +30,7 @@ func (r *Render) Render(ctx context.Context, w http.ResponseWriter, status int, 
 
 	runtime, err := runVM(b.Program)
 	if err != nil {
-		if r.debug {
+		if r.isDev {
 			return writeDebugError(w, err)
 		}
 		return err
@@ -38,7 +38,7 @@ func (r *Render) Render(ctx context.Context, w http.ResponseWriter, status int, 
 
 	appHtml, err := getStaticHTML(runtime, opts.Props)
 	if err != nil {
-		if r.debug {
+		if r.isDev {
 			return writeDebugError(w, err)
 		}
 		return err
@@ -48,7 +48,7 @@ func (r *Render) Render(ctx context.Context, w http.ResponseWriter, status int, 
 	if metadata == nil {
 		metadata, err = getMetadata(runtime, opts.Props)
 		if err != nil {
-			if r.debug {
+			if r.isDev {
 				return writeDebugError(w, err)
 			}
 			return err
@@ -60,10 +60,7 @@ func (r *Render) Render(ctx context.Context, w http.ResponseWriter, status int, 
 		return err
 	}
 
-	script := `<script>
-window._$HY = {};
-window.__DATA__ = ` + string(raw) + `
-</script>`
+	script := getHydrationScript(raw, r.isDev)
 
 	w.Header().Add("Content-Type", "text/html; charset=utf8")
 	w.WriteHeader(status)
@@ -73,6 +70,7 @@ window.__DATA__ = ` + string(raw) + `
 		"App":                template.HTML(appHtml),
 		"HydrationScriptSrc": b.ClientPath,
 		"NoHydrate":          opts.NoHydrate,
+		"IsDev":              r.isDev,
 		"Props":              opts.Props,
 	})
 }

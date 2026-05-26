@@ -12,15 +12,15 @@ type PoolRender struct {
 	pool      *pool
 	bundleMap map[string]*Bundle
 	tmpl      *template.Template
-	debug     bool
+	isDev     bool
 }
 
-func NewPooledRenderer(pool *pool, bMap map[string]*Bundle, tmpl *template.Template, debug bool) *PoolRender {
+func NewPooledRenderer(pool *pool, bMap map[string]*Bundle, tmpl *template.Template, isDev bool) *PoolRender {
 	return &PoolRender{
 		pool:      pool,
 		bundleMap: bMap,
 		tmpl:      tmpl,
-		debug:     debug,
+		isDev:     isDev,
 	}
 }
 
@@ -40,7 +40,7 @@ func (r *PoolRender) Render(ctx context.Context, w http.ResponseWriter, status i
 
 	appHtml, err := getStaticHTML(runtime, opts.Props)
 	if err != nil {
-		if r.debug {
+		if r.isDev {
 			return writeDebugError(w, err)
 		}
 		return err
@@ -50,7 +50,7 @@ func (r *PoolRender) Render(ctx context.Context, w http.ResponseWriter, status i
 	if metadata == nil {
 		metadata, err = getMetadata(runtime, opts.Props)
 		if err != nil {
-			if r.debug {
+			if r.isDev {
 				return writeDebugError(w, err)
 			}
 			return err
@@ -65,10 +65,7 @@ func (r *PoolRender) Render(ctx context.Context, w http.ResponseWriter, status i
 		return err
 	}
 
-	script := `<script>
-window._$HY = {};
-window.__DATA__ = ` + string(raw) + `
-</script>`
+	script := getHydrationScript(raw, r.isDev)
 
 	w.Header().Add("Content-Type", "text/html; charset=utf8")
 	w.WriteHeader(status)
@@ -78,6 +75,7 @@ window.__DATA__ = ` + string(raw) + `
 		"App":                template.HTML(appHtml),
 		"HydrationScriptSrc": b.ClientPath,
 		"NoHydrate":          opts.NoHydrate,
+		"IsDev":              r.isDev,
 		"Props":              opts.Props,
 	})
 }

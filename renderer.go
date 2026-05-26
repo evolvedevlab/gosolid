@@ -3,6 +3,7 @@ package gowebi
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/dop251/goja"
@@ -109,6 +110,44 @@ func getMetadata(runtime *Runtime, data any) (map[string]string, error) {
 	}
 
 	return metadata, nil
+}
+
+func getHydrationScript(raw []byte, isDev bool) string {
+	script := `<script>
+window._$HY = {};
+window.__DATA__ = ` + string(raw) + `
+</script>`
+
+	if isDev {
+		script += "\n" + browserReloadScript
+	}
+	return script
+}
+
+type devRender struct {
+	cfg  *Config
+	tmpl *template.Template
+}
+
+func newDevRenderer(cfg *Config, tmpl *template.Template) *devRender {
+	return &devRender{
+		cfg:  cfg,
+		tmpl: tmpl,
+	}
+}
+
+func (dr *devRender) Render(ctx context.Context, w http.ResponseWriter, status int, opts RenderOptions) error {
+	b, err := devBundleFromEntrypoint(dr.cfg.BundleFS, opts.Name)
+	if err != nil {
+		return err
+	}
+
+	bundles := map[string]*Bundle{
+		opts.Name: b,
+	}
+
+	r := NewRenderer(bundles, dr.tmpl, dr.cfg.IsDev)
+	return r.Render(ctx, w, status, opts)
 }
 
 func writeDebugError(w http.ResponseWriter, e error) error {
