@@ -6,6 +6,9 @@ watch:
     :: ENVIRONMENT=development go run . \
     :: wgo -dir=./web node esbuild.config.js
 
+run: build
+	@ENVIRONMENT=production ./bin/main
+
 build:
-	@ENVIRONMENT=production node esbuild.config.js \
-	&& ENVIRONMENT=production go build -o ./bin/main .
+	@ENVIRONMENT=production node esbuild.config.js
+	@go build -o ./bin/main .
