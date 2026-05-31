@@ -1,4 +1,4 @@
-module gowebi
+module github.com/evolvedevlab/gowebi
 
 go 1.25.0
 

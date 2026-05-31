@@ -3,9 +3,10 @@ package main
 import (
 	"embed"
 	"fmt"
-	"gowebi"
 	"log"
 	"net/http"
+
+	"github.com/evolvedevlab/gowebi"
 )
 
 type Data struct {
